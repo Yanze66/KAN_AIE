@@ -6,7 +6,7 @@ Having learned basic knowledge of KAN, I wrote a C library to execute KAN.
 
 # HOW TO USE
 
-1. cd KAN_AIE/KAN_c_src
+1. cd KAN_AIE/KAN_c_src/src
    
 2. gcc *.c -g -lm -o main 
 
