@@ -15,7 +15,7 @@
 void Univariate_Init(Univariate *uni, double xmin, double xmax, double ymin, double ymax, int points) {
     if (uni == NULL) {
         printf("uni pointer is NULL");
-        return; // 或者其他错误处理方式
+        return; // ~
     }
     uni->points = points;
     uni->xmin = xmin;
