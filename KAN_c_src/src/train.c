@@ -80,21 +80,21 @@ void Training(double** inputs, double* target,
 int main(int argc, char **argv) {
     int nRecords = 10000;
     // int nModels = 11;
-    int nModels = 30; //splines (grid)
+    int nModels = 30; //number of splines in output layer
     int nEpochs = 36;
     // int nEpochs = 100;
     int marginStart = 6;
     int marginEnd = 6;
     double sensitivity = 0.06;
-    int innerPoints = 6;
-    int outerPoints = 12;
+    int innerPoints = 6; //control points of spline in hidden layer
+    int outerPoints = 12;   //control points of spline in output layer
     double muInner = 0.01;
     double muOuter = 0.01;
 
     // Assuming Formula3 is defined and has appropriate methods
     Formula3 *formula = (Formula3 *)malloc(sizeof(Formula3));
 
-    formula->nInputs = 5;
+    formula->nInputs = 5; //input dimension
     Formula3_GenerateData(formula, nRecords);
 
     double *xmin = (double *)malloc(formula->nInputs * sizeof(double));
@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
     clock_t end_encoding = clock();
     printf("\nTime for training %2.3f sec.\n", (double)(end_encoding - start_encoding) / CLOCKS_PER_SEC);
    
-
+    printf("\nnumber of Parameter is %d\n", nModels * (innerPoints + 1) * 6); //univariate * 6
     //////// Object copy test //////
     KANAddend **addendsCopy = (KANAddend **)malloc(nModels * sizeof(KANAddend *));
     for (int i = 0; i < nModels; ++i) {
