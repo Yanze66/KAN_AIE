@@ -7,7 +7,7 @@ I built the C-based KAN in folder bspline-kan. It's a step-by-step implementatio
 
 In folder kan-bspline-vectorized, I am gonna optimize KAN. So the first step is to vectorize it, which means the core function, ie, Bspline, processes data in a matrix format rather than a singular value.
 
-# ============ Splitline =============
+# ============ Splitline ====Update in 2024.11.11=========
 
 # Reference
 
