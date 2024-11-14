@@ -3,10 +3,28 @@
 #include <math.h>
 #include <time.h>
 #include "utils.h"
-#include "spline2fun_loop.h"
+#include "spline2fun_adam.h"
 #include "kanlayer.h"
 
+//  define the entropy function
+// double calculate_entropy(double *values, int length) {
+//     double sum = 0.0;
+//     double entropy = 0.0;
 
+//     // 计算总和
+//     for (int i = 0; i < length; i++) {
+//         sum += values[i];
+//     }
+
+//     // 计算熵
+//     for (int i = 0; i < length; i++) {
+//         if (values[i] > 0) {
+//             double probability = values[i] / sum;
+//             entropy -= probability * log(probability);
+//         }
+//     }
+//     return entropy;
+// }
 
 double calculate_variance(double *values, int length) {
     double sum = 0.0;

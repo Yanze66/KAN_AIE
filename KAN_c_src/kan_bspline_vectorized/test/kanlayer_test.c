@@ -3,7 +3,7 @@
 #include <math.h>
 #include <time.h>
 #include "../utils.h"
-#include "../spline2fun_adam.h"
+#include "../spline2fun_loop.h"
 #include "../kanlayer.h"
 generate_3_1(double *inputs, double *outputs, int num_samples) {
     for (int i = 0; i < num_samples; i++) {

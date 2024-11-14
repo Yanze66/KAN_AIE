@@ -6,18 +6,15 @@
 #include "spline2fun_loop.h"
 // #include "kanlayer.h"
 
-double calculate_bspline(double *grid, int num_of_basis, double x) {
-    double N0[5] = {0};
-    double N1[4] = {0};
-    double N2[3] = {0};
-    double N3[2] = {0};
-    double N4[1] = {0};
 
+
+double calculate_bspline(double *grid, double x) {
+    double N0[5] = {0}, N1[4] = {0}, N2[3] = {0}, N3[2] = {0}, N4[1] = {0};
+    
     // 计算0阶B样条系数
     for (int i = 0; i <= 4; i++) {
         N0[i] = (grid[i] <= x && x < grid[i + 1]) ? 1.0 : 0.0;
     }
-
     // 计算1阶B样条系数
     for (int i = 0; i < 4; i++) {
         double alpha_denominator = grid[i + 1] - grid[i];
@@ -26,7 +23,6 @@ double calculate_bspline(double *grid, int num_of_basis, double x) {
         double beta = (beta_denominator == 0) ? 0 : (grid[i + 2] - x) / beta_denominator * N0[i + 1];
         N1[i] = alpha + beta;
     }
-
     // 计算2阶B样条系数
     for (int i = 0; i < 3; i++) {
         double alpha_denominator = grid[i + 2] - grid[i];
@@ -35,7 +31,6 @@ double calculate_bspline(double *grid, int num_of_basis, double x) {
         double beta = (beta_denominator == 0) ? 0 : (grid[i + 3] - x) / beta_denominator * N1[i + 1];
         N2[i] = alpha + beta;
     }
-
     // 计算3阶B样条系数
     for (int i = 0; i < 2; i++) {
         double alpha_denominator = grid[i + 3] - grid[i];
@@ -44,7 +39,6 @@ double calculate_bspline(double *grid, int num_of_basis, double x) {
         double beta = (beta_denominator == 0) ? 0 : (grid[i + 4] - x) / beta_denominator * N2[i + 1];
         N3[i] = alpha + beta;
     }
-
     // 计算4阶B样条系数
     for (int i = 0; i < 1; i++) {
         double alpha_denominator = grid[i + 4] - grid[i];
@@ -53,62 +47,31 @@ double calculate_bspline(double *grid, int num_of_basis, double x) {
         double beta = (beta_denominator == 0) ? 0 : (grid[i + 5] - x) / beta_denominator * N3[i + 1];
         N4[i] = alpha + beta;
     }
-
     return N4[0];
 }
 
-void B_batch(double x, double *grid, int num, int k, double *result) {
+void B_batch(double *x_array, int x_length, double **grid_array, int num, int k, double **result_array) {
     int num_basis = num + k - 1;
-    double x_val = x;
-    for (int i = 0; i < num_basis; i++) {
-        result[i] = calculate_bspline(grid + i, 4, x_val);
+    for (int j = 0; j < x_length; j++) {
+        for (int i = 0; i < num_basis; i++) {
+            result_array[j][i] = calculate_bspline(grid_array[j]+i, x_array[j]);
+        }
     }
 }
 
-
-// //  define the function to calculate the B-spline basis function
-// double calculate_bspline(double *grid, int k, int num_of_basis, double x) {
-//     if(k==0){
-//         return (grid[num_of_basis] <= x && x < grid[num_of_basis + 1]) ? 1.0 : 0.0;
-//     } else {
-//         double alpha_denominator = grid[num_of_basis + k] - grid[num_of_basis];
-//         double beta_denominator = grid[num_of_basis + k + 1] - grid[num_of_basis + 1];
-//         double alpha = (alpha_denominator == 0) ? 0 : (x - grid[num_of_basis]) / alpha_denominator * calculate_bspline(grid, k - 1, num_of_basis, x);
-//         double beta = (beta_denominator == 0) ? 0 : (grid[num_of_basis + k + 1] - x) / beta_denominator * calculate_bspline(grid, k - 1, num_of_basis + 1, x);
-//         return alpha + beta;
-//     }
-// }
-
-// //  define the function to calculate the B-spline basis function,x为输入，grid为节点，num_interval为节点数，k为阶数，result为输出
-// void B_batch(double x, double *grid, int num_interval, int k, double *result) {
-//     int num_basis = num_interval + k - 1;
-//     double x_val = x;
-//     for (int i = 0; i < num_basis; i++) {
-//         result[i] = calculate_bspline(grid, k, i, x_val);
-//     }
-// }
-
-
-
-
-
-
 double calculate_bspline_derivative(double *grid, int k, int num_of_basis, double x) {
     if (k == 0) {
-        return 0.0; // 因为0阶B样条是常数，导数为0
+        return 0.0;
     } else {
         double alpha_denominator = grid[num_of_basis + k] - grid[num_of_basis];
         double beta_denominator = grid[num_of_basis + k + 1] - grid[num_of_basis + 1];
-
         double alpha_term = 0, beta_term = 0;
         if (alpha_denominator != 0) {
-            alpha_term = (k / alpha_denominator) * calculate_bspline(grid,  num_of_basis, x);
+            alpha_term = (k / alpha_denominator) * calculate_bspline(grid, x);
         }
-        
         if (beta_denominator != 0) {
-            beta_term = (-k / beta_denominator) * calculate_bspline(grid,  num_of_basis + 1, x);
+            beta_term = (-k / beta_denominator) * calculate_bspline(grid, x);
         }
-
         return alpha_term + beta_term;
     }
 }
@@ -236,104 +199,104 @@ Neural* init_neural(int l,int in_index, int out_index, int num, int k) {
     return neural;
 }
 
-double forward_neural(Neural *neural, double x) {
-    double result = 0.0;
-    neural->in_value = x;
-    grid_extend(x, &neural->grid, &neural->grid_size, &neural->num, neural->k, &neural->coef);
-    if(neural->active == 0){
-        return 0.0;
-    }else {
-        if(!neural->fun_fixed){
-            double sx_result[neural->num + neural->k];
-            B_batch(x, neural->grid, neural->num, neural->k, sx_result);
-            double spline_value = 0.0;
+// double forward_neural(Neural *neural, double x) {
+//     double result = 0.0;
+//     neural->in_value = x;
+//     grid_extend(x, &neural->grid, &neural->grid_size, &neural->num, neural->k, &neural->coef);
+//     if(neural->active == 0){
+//         return 0.0;
+//     }else {
+//         if(!neural->fun_fixed){
+//             double sx_result[neural->num + neural->k];
+//             B_batch(x, neural->grid, neural->num, neural->k, sx_result);
+//             double spline_value = 0.0;
     
-            for (int i = 0; i < neural->num+neural->k-1; i++) {
-                spline_value += neural->coef[i] * sx_result[i];
-            }
-            //result = neural->active * (relu(x) * neural->wb + spline_value);
-            result = neural->active * (silu(x) * neural->wb + spline_value);
-        }else if(neural->fun_fixed){
-            result = neural->fx(neural->best_a * x + neural->best_b) * neural->best_c + neural->best_d;
-        }
-        neural->out_value = result;
-        return result;
-    }
-}
+//             for (int i = 0; i < neural->num+neural->k-1; i++) {
+//                 spline_value += neural->coef[i] * sx_result[i];
+//             }
+//             //result = neural->active * (relu(x) * neural->wb + spline_value);
+//             result = neural->active * (silu(x) * neural->wb + spline_value);
+//         }else if(neural->fun_fixed){
+//             result = neural->fx(neural->best_a * x + neural->best_b) * neural->best_c + neural->best_d;
+//         }
+//         neural->out_value = result;
+//         return result;
+//     }
+// }
 
 
 // BP update coef, SG version, L1 regularization
-void backward_neural(Neural *neural, double x, double error, double learning_rate, double lambda) {
-    if(neural->active == 0){
-        return;
-    }else{
-        if(!neural->fun_fixed){
-        double sx_result[neural->num + neural->k-1];
-        B_batch(x, neural->grid, neural->num, neural->k, sx_result);
+// void backward_neural(Neural *neural, double x, double error, double learning_rate, double lambda) {
+//     if(neural->active == 0){
+//         return;
+//     }else{
+//         if(!neural->fun_fixed){
+//         double sx_result[neural->num + neural->k-1];
+//         B_batch(x, neural->grid, neural->num, neural->k, sx_result);
         
         
-        for (int i = 0; i < neural->num +neural->k-1; i++) {
-            double gradient = error * sx_result[i];
-            // L1正则化梯度调整：在原有梯度上加上 L1 的部分
-            if (neural->coef[i] > 0) {
-                gradient += lambda;
-            } else if (neural->coef[i] < 0) {
-                gradient -= lambda;
-            }
+//         for (int i = 0; i < neural->num +neural->k-1; i++) {
+//             double gradient = error * sx_result[i];
+//             // L1正则化梯度调整：在原有梯度上加上 L1 的部分
+//             if (neural->coef[i] > 0) {
+//                 gradient += lambda;
+//             } else if (neural->coef[i] < 0) {
+//                 gradient -= lambda;
+//             }
 
-            neural->coef[i] -= learning_rate * gradient;
-        }
+//             neural->coef[i] -= learning_rate * gradient;
+//         }
 
-         // 更新权重 wb
-        //double activation_derivative = (x > 0) ? 1 : 0; // ReLU derivative
-        double activation_derivative = silu_derivative(x); // silu derivative
-        double gradient_wb = error * activation_derivative * x ;
-         // 对偏置项使用 L1 正则化
-        if (neural->wb > 0) {
-            gradient_wb += lambda;
-        } else if (neural->wb < 0) {
-            gradient_wb -= lambda;
-        }
+//          // 更新权重 wb
+//         //double activation_derivative = (x > 0) ? 1 : 0; // ReLU derivative
+//         double activation_derivative = silu_derivative(x); // silu derivative
+//         double gradient_wb = error * activation_derivative * x ;
+//          // 对偏置项使用 L1 正则化
+//         if (neural->wb > 0) {
+//             gradient_wb += lambda;
+//         } else if (neural->wb < 0) {
+//             gradient_wb -= lambda;
+//         }
 
-        neural->wb -= learning_rate * gradient_wb;
-        return;  
-        } else if(neural->fun_fixed){
+//         neural->wb -= learning_rate * gradient_wb;
+//         return;  
+//         } else if(neural->fun_fixed){
             
-        double fx_derivative = neural->fx_derivative(neural->best_a * x + neural->best_b);
-        double gradient_a = error * neural->best_c* fx_derivative * x;
-        double gradient_b = error * neural->best_c*fx_derivative;
-        double gradient_c = error * fx_derivative;
-        double gradient_d = error;
+//         double fx_derivative = neural->fx_derivative(neural->best_a * x + neural->best_b);
+//         double gradient_a = error * neural->best_c* fx_derivative * x;
+//         double gradient_b = error * neural->best_c*fx_derivative;
+//         double gradient_c = error * fx_derivative;
+//         double gradient_d = error;
 
-        // // 添加 L2 正则化项
-        // gradient_a += lambda * neural->best_a;
-        // gradient_b += lambda * neural->best_b;
-        // gradient_c += lambda * neural->best_c;
-        // gradient_d += lambda * neural->best_d;
+//         // // 添加 L2 正则化项
+//         // gradient_a += lambda * neural->best_a;
+//         // gradient_b += lambda * neural->best_b;
+//         // gradient_c += lambda * neural->best_c;
+//         // gradient_d += lambda * neural->best_d;
 
-        // 应用梯度裁剪
-        double max_grad = 1.0;
-        if (gradient_a > max_grad) gradient_a = max_grad;
-        if (gradient_a < -max_grad) gradient_a = -max_grad;
-        if (gradient_b > max_grad) gradient_b = max_grad;
-        if (gradient_b < -max_grad) gradient_b = -max_grad;
-        if (gradient_c > max_grad) gradient_c = max_grad;
-        if (gradient_c < -max_grad) gradient_c = -max_grad;
-        if (gradient_d > max_grad) gradient_d = max_grad;
-        if (gradient_d < -max_grad) gradient_d = -max_grad;
+//         // 应用梯度裁剪
+//         double max_grad = 1.0;
+//         if (gradient_a > max_grad) gradient_a = max_grad;
+//         if (gradient_a < -max_grad) gradient_a = -max_grad;
+//         if (gradient_b > max_grad) gradient_b = max_grad;
+//         if (gradient_b < -max_grad) gradient_b = -max_grad;
+//         if (gradient_c > max_grad) gradient_c = max_grad;
+//         if (gradient_c < -max_grad) gradient_c = -max_grad;
+//         if (gradient_d > max_grad) gradient_d = max_grad;
+//         if (gradient_d < -max_grad) gradient_d = -max_grad;
 
-        double new_learning_rate = learning_rate /500;
-        // 应用梯度更新
-        neural->best_a -= new_learning_rate * gradient_a;
-        neural->best_b -= new_learning_rate * gradient_b;
-        neural->best_c -= new_learning_rate * gradient_c;
-        neural->best_d -= new_learning_rate * gradient_d;
+//         double new_learning_rate = learning_rate /500;
+//         // 应用梯度更新
+//         neural->best_a -= new_learning_rate * gradient_a;
+//         neural->best_b -= new_learning_rate * gradient_b;
+//         neural->best_c -= new_learning_rate * gradient_c;
+//         neural->best_d -= new_learning_rate * gradient_d;
 
-    }
+//     }
     
-    }
+//     }
     
-}
+// }
 
 // Calculate the previous error for the neuron
 
@@ -453,43 +416,43 @@ void fix_fun(Neural *neural, double *inputs, double *outputs, int num_samples) {
 }
 
 // train the neural network
-void train(Neural *neural, double *inputs, double *outputs, int num_samples, int num_epochs, double learning_rate, double lambda) {
-    for (int epoch = 0; epoch < num_epochs; epoch++) {
-        double total_loss = 0.0;
-        double adjusted_learning_rate = learning_rate / (1 + 0.001 * epoch);
-        //double adjusted_learning_rate = learning_rate;
-        for (int i = 0; i < num_samples; i++) {
-            double x = inputs[i];
-            double true_value = outputs[i];
+// void train(Neural *neural, double *inputs, double *outputs, int num_samples, int num_epochs, double learning_rate, double lambda) {
+//     for (int epoch = 0; epoch < num_epochs; epoch++) {
+//         double total_loss = 0.0;
+//         double adjusted_learning_rate = learning_rate / (1 + 0.001 * epoch);
+//         //double adjusted_learning_rate = learning_rate;
+//         for (int i = 0; i < num_samples; i++) {
+//             double x = inputs[i];
+//             double true_value = outputs[i];
 
-            double predicted_value = forward_neural(neural, x);
+//             double predicted_value = forward_neural(neural, x);
             
-            //printf("Sample %d, x = %.3f, real-output=%.3f, predicted=%.3f\n", i, x, true_value, predicted_value);
+//             //printf("Sample %d, x = %.3f, real-output=%.3f, predicted=%.3f\n", i, x, true_value, predicted_value);
             
 
-            double error = predicted_value - true_value;
+//             double error = predicted_value - true_value;
             
-            total_loss += error * error;
+//             total_loss += error * error;
 
-            backward_neural(neural, x, error, adjusted_learning_rate,lambda);
+//             backward_neural(neural, x, error, adjusted_learning_rate,lambda);
 
-        }
+//         }
         
-        total_loss = sqrt(total_loss / num_samples);
-        printf("Epoch %d: RMSE Loss = %f\n", epoch + 1, total_loss);
-    }
-}
+//         total_loss = sqrt(total_loss / num_samples);
+//         printf("Epoch %d: RMSE Loss = %f\n", epoch + 1, total_loss);
+//     }
+// }
 
-void compute_loss(Neural *neural, double *inputs, double *outputs, int num_samples) {
-    double total_loss = 0;
+// void compute_loss(Neural *neural, double *inputs, double *outputs, int num_samples) {
+//     double total_loss = 0;
 
-    for (int i = 0; i < num_samples; i++) {
-        double predicted_value = forward_neural(neural, inputs[i]);
-        double error = predicted_value - outputs[i];
-        total_loss += error * error;
-    }
+//     for (int i = 0; i < num_samples; i++) {
+//         double predicted_value = forward_neural(neural, inputs[i]);
+//         double error = predicted_value - outputs[i];
+//         total_loss += error * error;
+//     }
 
-    total_loss = sqrt(total_loss / num_samples);
-    printf("Final RMSE Loss: %f\n", total_loss);
-}
+//     total_loss = sqrt(total_loss / num_samples);
+//     printf("Final RMSE Loss: %f\n", total_loss);
+// }
 

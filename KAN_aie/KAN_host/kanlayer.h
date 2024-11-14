@@ -5,7 +5,7 @@
 #include <math.h>
 #include <time.h>
 #include "utils.h"
-#include "spline2fun_loop.h"
+#include "spline2fun_adam.h"
 
 
 typedef struct {

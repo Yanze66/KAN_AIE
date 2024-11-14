@@ -5,37 +5,47 @@
 #include "../spline2fun_loop.h"
 // 声明 B_batch 函数
 void test_b_batch() {
-    // 定义网格
-    
-    int num =5;
+    // Define grid dimensions
+    int num = 5;
     int k = 3;
-    int num_interval = num+ 2*k;
-    double grid[num_interval];
-    double result[num_interval - k - 1]; // num_basis = num_interval - k - 1
-
-    // 填充网格，在 [-1, 1] 间均匀填充 11 个点
-    for (int i = 0; i < num_interval; i++) {
-        grid[i] = -1.0 + i * (2.0 / (num_interval - 1));
-    }
-
-    // 测试 B 样条计算，输入 x 值
+    int num_interval = num + 2 * k;
+    int num_basis = num_interval - k - 1;
     double test_values[] = {-0.5, 0.0, 0.5};
     int num_tests = sizeof(test_values) / sizeof(test_values[0]);
 
-    // 对每个测试 x 值进行计算
+    // Allocate 2D grid array (for each test value) and result array
+    double **grid_array = (double **)malloc(num_tests * sizeof(double *));
+    double **result_array = (double **)malloc(num_tests * sizeof(double *));
     for (int j = 0; j < num_tests; j++) {
-        double x = test_values[j];
+        grid_array[j] = (double *)malloc(num_interval * sizeof(double));
+        result_array[j] = (double *)malloc(num_basis * sizeof(double));
 
-        // 调用 b_batch 函数
-        B_batch(x, grid, num, 4, result);
+        // Fill grid for each test case with uniformly distributed points in [-1, 1]
+        for (int i = 0; i < num_interval; i++) {
+            grid_array[j][i] = -1.0 + i * (2.0 / (num_interval - 1));
+            printf("grid_array[%d][%d] = %f\n", j, i, grid_array[j][i]);
+        }
+    }
 
-        // 输出结果
-        printf("B-spline basis functions for x = %.2f:\n", x);
-        for (int i = 0; i < num_interval - k - 1; i++) {
-            printf("B[%d] = %f\n", i, result[i]);
+    // Call B_batch with test values
+    B_batch(test_values, num_tests, grid_array, num, 4, result_array);
+
+    // Print results for each test value
+    for (int j = 0; j < num_tests; j++) {
+        printf("B-spline basis functions for x = %.2f:\n", test_values[j]);
+        for (int i = 0; i < num_basis; i++) {
+            printf("B[%d] = %f\n", i, result_array[j][i]);
         }
         printf("\n");
     }
+
+    // Free allocated memory
+    // for (int j = 0; j < num_tests; j++) {
+    //     free(grid_array[j]);
+    //     free(result_array[j]);
+    // }
+    free(grid_array);
+    free(result_array);
 }
 
 void test_grid_extend() {
@@ -102,7 +112,7 @@ int main() {
 
     // 运行测试函数
     test_b_batch();
-    test_grid_extend();
+    // test_grid_extend();
 
     // 记录结束时间和CPU周期
     end_cycles = __rdtsc();

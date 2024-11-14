@@ -11,10 +11,9 @@ double calculate_bspline_derivative(double *grid, int k, int num_of_basis, doubl
 
 
 //  double calculate_bspline(double *grid, int k, int num_of_basis, double x) ;
-double calculate_bspline(double *grid, int num_of_basis, double x) ;
-
+double calculate_bspline(double *grid, double x) ;
 //  define the function to calculate the B-spline basis function,x为输入，grid为节点，num为节点数，k为阶数，result为输出
-void B_batch(double x, double *grid, int num, int k, double *result) ;
+void B_batch(double *x_array, int x_length, double **grid_array, int num, int k, double **result_array) ;
 
 double relu(double x) ;
 
@@ -54,7 +53,7 @@ typedef struct {
 
 Neural* init_neural(int l, int in_index, int out_index, int num, int k) ;
 
-double forward_neural(Neural *neural, double x) ;
+//double forward_neural(Neural *neural, double x) ;
 
 //void grid_extend(double x, double **grid, int *grid_size, int num, int k) ;
 
@@ -62,14 +61,14 @@ void grid_extend(double x, double **grid, int *grid_size, int *num, int k, doubl
 
 
 // 反向传播更新 coef
-void backward_neural(Neural *neural, double x, double error, double learning_rate, double lambda) ;
+//void backward_neural(Neural *neural, double x, double error, double learning_rate, double lambda) ;
 
 void calculate_previous_error(Neural* neural, double current_error) ;
 
 void fix_fun(Neural *neural, double *inputs, double *outputs, int num_samples) ;
 // 封装的训练函数
-void train(Neural *neural, double *inputs, double *outputs, int num_samples, int num_epochs, double learning_rate, double lambda) ;
+// void train(Neural *neural, double *inputs, double *outputs, int num_samples, int num_epochs, double learning_rate, double lambda) ;
 
-void compute_loss(Neural *neural, double *inputs, double *outputs, int num_samples) ;
+// void compute_loss(Neural *neural, double *inputs, double *outputs, int num_samples) ;
 
 #endif
